@@ -1,0 +1,44 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local virtual environments
+.venv/
+venv/
+.pvenv/
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+~$*
+~WRL*.tmp
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+service-account*.json
+
+# Local databases and backups
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.backup
+*.bak
+
+# Logs and generated runtime output
+*.log
+log.txt
+logs/
+workflow-runs/
+
+# Frontend dependencies/build output
+node_modules/
+dist/

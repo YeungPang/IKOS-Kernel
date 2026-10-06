@@ -1,0 +1,480 @@
+# ---------------------------------------------------------------------------
+# IKOS kernel generic SOLF script
+# ---------------------------------------------------------------------------
+# Extracted from IDMS-Demo/solf_script.txt and reduced to the non-domain kernel
+# baseline only. This file intentionally excludes project/task/compliance/accounting
+# business logic and other domain-specific demos.
+# ---------------------------------------------------------------------------
+
+entity ≔ {
+    objectType: class,
+    id: Ø,
+    name: Ø,
+    legal_name: Ø,
+    description: Ø,
+    ingest: ⦃db_ingest(_entity_payload)⦄,
+    update: ⦃db_update(_entity_payload)⦄,
+    delete: ⦃db_delete(_entity_payload)⦄
+}
+
+ingest(_entity_payload) ⦃db_ingest(_entity_payload)⦄
+update(_entity_payload) ⦃db_update(_entity_payload)⦄
+delete(_entity_payload) ⦃db_delete(_entity_payload)⦄
+entity_ingest(_entity_payload) ⦃ingest(_entity_payload)⦄
+entity_update(_entity_payload) ⦃update(_entity_payload)⦄
+entity_delete(_entity_payload) ⦃delete(_entity_payload)⦄
+
+merge_entities(_entity_1, _entity_2) ⦃
+    (_id_1 ≔ get_entity_id(_entity_1)) ⋀
+    (_id_2 ≔ get_entity_id(_entity_2)) ⋀
+    ↲(merge(_id_1, _id_2))
+⦄
+
+resolve_policy(_entity_payload) ⦃
+    ↲({
+        threshold: 0.72,
+        low_threshold: 0.72,
+        high_threshold: 0.72,
+        margin: 0.08,
+        max_candidates: 20,
+        name_similarity_weight: 0.35,
+        strong_match_score: 0.45,
+        medium_match_score: 0.2,
+        strong_keys: [],
+        medium_keys: []
+    })
+⦄
+
+entity_resolve_policy(_entity_payload) ⦃↲(resolve_policy(_entity_payload))⦄
+
+interaction_query_policy(_context) ⦃
+    ↲({
+        mode: allow,
+        reason: default_interaction_query_policy,
+        message: ""
+    })
+⦄
+
+interaction_answer_policy(_context) ⦃
+    ↲({
+        mode: allow,
+        reason: default_interaction_answer_policy,
+        message: ""
+    })
+⦄
+
+query_style_policy(_context) ⦃
+    (_style_hint ≔ _context[style_hint]) ⋀
+    (_initial_action ≔ _context[initial_action]) ⋀
+    (_style_hint = temporal_filtered_criteria) ⋀
+    ↲({
+        mode: allow,
+        reason: temporal_criteria_query,
+        query_style: temporal_filtered_criteria,
+        initial_action: search_criteria,
+        message: ""
+    })
+⦄
+
+query_style_policy(_context) ⦃
+    (_style_hint ≔ _context[style_hint]) ⋀
+    (_initial_action ≔ _context[initial_action]) ⋀
+    (_style_hint = criteria_list) ⋀
+    ↲({
+        mode: allow,
+        reason: criteria_list_query,
+        query_style: criteria_list,
+        initial_action: search_criteria,
+        message: ""
+    })
+⦄
+
+query_style_policy(_context) ⦃
+    (_style_hint ≔ _context[style_hint]) ⋀
+    (_initial_action ≔ _context[initial_action]) ⋀
+    (_style_hint = document_retrieval) ⋀
+    ↲({
+        mode: allow,
+        reason: document_retrieval_query,
+        query_style: document_retrieval,
+        initial_action: lookup_attribute,
+        message: ""
+    })
+⦄
+
+query_style_policy(_context) ⦃
+    (_style_hint ≔ _context[style_hint]) ⋀
+    (_initial_action ≔ _context[initial_action]) ⋀
+    (_style_hint = attribute_value) ⋀
+    ↲({
+        mode: allow,
+        reason: attribute_value_query,
+        query_style: attribute_value,
+        initial_action: lookup_attribute,
+        message: ""
+    })
+⦄
+
+query_style_policy(_context) ⦃
+    (_style_hint ≔ _context[style_hint]) ⋀
+    (_initial_action ≔ _context[initial_action]) ⋀
+    ↲({
+        mode: allow,
+        reason: default_query_style_policy,
+        query_style: _style_hint,
+        initial_action: _initial_action,
+        message: ""
+    })
+⦄
+
+can_create_workflow_case(_payload) ⦃
+    ↲({
+        mode: allow,
+        reason: default_can_create_workflow_case,
+        allowed: true
+    })
+⦄
+
+can_ingest_document(_payload) ⦃
+    ↲({
+        mode: allow,
+        reason: default_can_ingest_document,
+        allowed: true
+    })
+⦄
+
+can_ingest_information(_payload) ⦃
+    ↲({
+        mode: allow,
+        reason: default_can_ingest_information,
+        allowed: true
+    })
+⦄
+
+can_generate_document(_payload) ⦃
+    ↲({
+        mode: allow,
+        reason: default_can_generate_document,
+        allowed: true
+    })
+⦄
+
+can_retrieve_document_file(_payload) ⦃
+    ↲({
+        mode: allow,
+        reason: default_can_retrieve_document_file,
+        allowed: true
+    })
+⦄
+
+event_subscription_policy(_payload) ⦃
+    ↲({
+        mode: allow,
+        reason: default_event_subscription_policy,
+        allowed: true
+    })
+⦄
+
+scheduler_command_policy(_payload) ⦃
+    ↲({
+        mode: allow,
+        reason: default_scheduler_command_policy,
+        allowed: true
+    })
+⦄
+
+event_publish_policy(_payload) ⦃
+    ↲({
+        mode: allow,
+        reason: default_event_publish_policy,
+        allowed: true
+    })
+⦄
+
+workflow_transition_policy(_payload) ⦃
+    (_entity_type ≔ _payload[entity_type]) ⋀
+    (_to_state ≔ _payload[to_state]) ⋀
+    (_event ≔ _payload[event]) ⋀
+    (_actor_ref ≔ _payload[actor_ref]) ⋀
+    (_entity_type = "workflow_case") ⋀
+    ((_to_state = "approved") ⋁ (_to_state = "rejected")) ⋀
+    (_event ≠ "approval_recorded") ⋀
+    ↲({
+        mode: deny,
+        reason: workflow_case_terminal_state_requires_approval_event,
+        allowed: false,
+        message: "workflow_case can move to approved/rejected only from approval_recorded event"
+    })
+⦄
+
+workflow_transition_policy(_payload) ⦃
+    (_entity_type ≔ _payload[entity_type]) ⋀
+    (_to_state ≔ _payload[to_state]) ⋀
+    (_event ≔ _payload[event]) ⋀
+    (_actor_ref ≔ _payload[actor_ref]) ⋀
+    (_entity_type = "workflow_case") ⋀
+    ((_to_state = "approved") ⋁ (_to_state = "rejected")) ⋀
+    (_actor_ref = "system") ⋀
+    ↲({
+        mode: deny,
+        reason: manual_terminal_transition_not_allowed,
+        allowed: false,
+        message: "manual transition to terminal workflow_case state is not allowed"
+    })
+⦄
+
+workflow_transition_policy(_payload) ⦃
+    ↲({
+        mode: allow,
+        reason: default_workflow_transition_policy,
+        allowed: true,
+        message: ""
+    })
+⦄
+
+# ---------------------------------------------------------------------------
+# SOLF semantic composition templates (generic kernel baseline)
+# ---------------------------------------------------------------------------
+
+compose_interaction(_intent_payload) ⦃
+    (_interaction_type ≔ _intent_payload[interaction_type]) ⋀
+    (_action ≔ _intent_payload[action]) ⋀
+    (_entity_type ≔ _intent_payload[entity_type]) ⋀
+    (_args ≔ _intent_payload[args]) ⋀
+    ↲({
+        interaction_type: _interaction_type,
+        action: _action,
+        entity_type: _entity_type,
+        args: _args,
+        route: workflow
+    })
+⦄
+
+action_plan(create_workflow_case, _args) ⦃↲(create_workflow_case_plan(_args))⦄
+action_plan(ingest_document, _args) ⦃↲(ingest_document_plan(_args))⦄
+action_plan(ingest_information, _args) ⦃↲(ingest_information_plan(_args))⦄
+action_plan(generate_document, _args) ⦃↲(generate_document_plan(_args))⦄
+action_plan(retrieve_document_file, _args) ⦃↲(retrieve_document_file_plan(_args))⦄
+
+create_workflow_case_plan(_args) ⦃
+    (_case_no ≔ _args[case_no]) ⋀
+    (_case_type ≔ _args[case_type]) ⋀
+    (_subject_ref ≔ _args[subject_ref]) ⋀
+    (_initiated_by_ref ≔ _args[initiated_by_ref]) ⋀
+    (_current_step ≔ _args[current_step]) ⋀
+    (_sla_due_at ≔ _args[sla_due_at]) ⋀
+    (_status ≔ _args[status]) ⋀
+    ↲({
+        action: create_workflow_case,
+        guard: can_create_workflow_case,
+        sql_builder: sql_plan_create_workflow_case,
+        args: {
+            case_no: _case_no,
+            case_type: _case_type,
+            subject_ref: _subject_ref,
+            initiated_by_ref: _initiated_by_ref,
+            current_step: _current_step,
+            sla_due_at: _sla_due_at,
+            status: _status
+        }
+    })
+⦄
+
+ingest_document_plan(_args) ⦃
+    (_source ≔ _args[source]) ⋀
+    (_description ≔ _args[description]) ⋀
+    (_tags ≔ _args[tags]) ⋀
+    (_metadata ≔ _args[metadata]) ⋀
+    ↲({
+        action: ingest_document,
+        guard: can_ingest_document,
+        args: {
+            source: _source,
+            description: _description,
+            tags: _tags,
+            metadata: _metadata
+        }
+    })
+⦄
+
+ingest_information_plan(_args) ⦃
+    (_information_text ≔ _args[information_text]) ⋀
+    (_description ≔ _args[description]) ⋀
+    (_tags ≔ _args[tags]) ⋀
+    (_metadata ≔ _args[metadata]) ⋀
+    ↲({
+        action: ingest_information,
+        guard: can_ingest_information,
+        args: {
+            information_text: _information_text,
+            description: _description,
+            tags: _tags,
+            metadata: _metadata
+        }
+    })
+⦄
+
+generate_document_plan(_args) ⦃
+    (_document_type ≔ _args[document_type]) ⋀
+    (_subject ≔ _args[subject]) ⋀
+    (_context ≔ _args[context]) ⋀
+    (_template ≔ _args[template]) ⋀
+    (_output_path ≔ _args[output_path]) ⋀
+    ↲({
+        action: generate_document,
+        guard: can_generate_document,
+        args: {
+            document_type: _document_type,
+            subject: _subject,
+            context: _context,
+            template: _template,
+            output_path: _output_path
+        }
+    })
+⦄
+
+retrieve_document_file_plan(_args) ⦃
+    (_doc_id ≔ _args[doc_id]) ⋀
+    ↲({
+        action: retrieve_document_file,
+        guard: can_retrieve_document_file,
+        sql_builder: sql_plan_retrieve_document_by_doc_id,
+        args: {
+            doc_id: _doc_id
+        }
+    })
+⦄
+
+retrieve_document_file_plan(_args) ⦃
+    (_doc_key ≔ _args[doc_key]) ⋀
+    ↲({
+        action: retrieve_document_file,
+        guard: can_retrieve_document_file,
+        sql_builder: sql_plan_retrieve_document_by_doc_key,
+        args: {
+            doc_key: _doc_key
+        }
+    })
+⦄
+
+retrieve_document_file_plan(_args) ⦃
+    (_doc_name ≔ _args[doc_name]) ⋀
+    ↲({
+        action: retrieve_document_file,
+        guard: can_retrieve_document_file,
+        sql_builder: sql_plan_retrieve_document_by_doc_name,
+        args: {
+            doc_name: _doc_name
+        }
+    })
+⦄
+
+# SQL plan templates emitted by SOLF, executed by Python adapters.
+sql_plan_create_workflow_case(_args) ⦃
+    (_case_no ≔ _args[case_no]) ⋀
+    (_case_type ≔ _args[case_type]) ⋀
+    (_subject_ref ≔ _args[subject_ref]) ⋀
+    (_initiated_by_ref ≔ _args[initiated_by_ref]) ⋀
+    (_current_step ≔ _args[current_step]) ⋀
+    (_sla_due_at ≔ _args[sla_due_at]) ⋀
+    (_status ≔ _args[status]) ⋀
+    ↲({
+        operation: insert,
+        table: workflow_cases,
+        values: {
+            case_no: _case_no,
+            case_type: _case_type,
+            subject_ref: _subject_ref,
+            initiated_by_ref: _initiated_by_ref,
+            current_step: _current_step,
+            sla_due_at: _sla_due_at,
+            status: _status
+        },
+        returning: [id]
+    })
+⦄
+
+sql_plan_retrieve_document_by_doc_id(_args) ⦃
+    (_doc_id ≔ _args[doc_id]) ⋀
+    ↲({
+        operation: select,
+        table: document,
+        where: { doc_id: _doc_id }
+    })
+⦄
+
+sql_plan_retrieve_document_by_doc_key(_args) ⦃
+    (_doc_key ≔ _args[doc_key]) ⋀
+    ↲({
+        operation: select,
+        table: document,
+        where: { doc_key: _doc_key }
+    })
+⦄
+
+sql_plan_retrieve_document_by_doc_name(_args) ⦃
+    (_doc_name ≔ _args[doc_name]) ⋀
+    ↲({
+        operation: select,
+        table: document,
+        where: { doc_name: _doc_name }
+    })
+⦄
+
+# Scheduler semantic command patterns.
+scheduler_command(start, _args) ⦃
+    ↲({
+        command: start,
+        args: _args
+    })
+⦄
+
+scheduler_command(stop, _args) ⦃
+    ↲({
+        command: stop,
+        args: _args
+    })
+⦄
+
+scheduler_command(add_job, _args) ⦃
+    (_query ≔ _args[query]) ⋀
+    (_cron_expression ≔ _args[cron_expression]) ⋀
+    ↲({
+        command: add_job,
+        args: {
+            query: _query,
+            cron_expression: _cron_expression,
+            tags: _args[tags]
+        }
+    })
+⦄
+
+scheduler_command(remove_job, _args) ⦃
+    (_job_id ≔ _args[job_id]) ⋀
+    ↲({
+        command: remove_job,
+        args: {
+            job_id: _job_id
+        }
+    })
+⦄
+
+scheduler_command(pause_job, _args) ⦃
+    (_job_id ≔ _args[job_id]) ⋀
+    ↲({
+        command: pause_job,
+        args: {
+            job_id: _job_id
+        }
+    })
+⦄
+
+scheduler_command(resume_job, _args) ⦃
+    (_job_id ≔ _args[job_id]) ⋀
+    ↲({
+        command: resume_job,
+        args: {
+            job_id: _job_id
+        }
+    })
+⦄

@@ -1,0 +1,3 @@
+# Kernel-local dependency overlay; the host application supplies the other
+# runtime packages. Required by trusted capability JSON Schema validation.
+jsonschema>=4.18.0,<5

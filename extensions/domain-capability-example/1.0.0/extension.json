@@ -1,0 +1,71 @@
+{
+  "schema_version": "1",
+  "extension_key": "domain-capability-example",
+  "version": "1.0.0",
+  "display_name": "Generic Domain Booking Capability Example",
+  "description": "Illustrates trusted domain booking review/post capabilities, explicit compensation references, and a tenant-scoped ingestion trigger. It provides no domain handler or accounting implementation.",
+  "assets": [
+    {
+      "kind": "workflow",
+      "key": "booking-review-post",
+      "payload": {
+        "workflow_name": "Generic booking review and post",
+        "description": "Calls trusted domain capabilities; handlers own domain validation and persistence.",
+        "domain": "generic-domain-booking",
+        "steps": [
+          {
+            "step_key": "review-booking",
+            "step_kind": "capability",
+            "config": {
+              "capability_key": "domain.booking.review",
+              "capability_version": "1.0.0",
+              "payload": {
+                "review_mode": "before_post"
+              },
+              "payload_fields": {
+                "document_id": "document_id",
+                "document_type": "document_type"
+              },
+              "save_as": "booking_review"
+            }
+          },
+          {
+            "step_key": "post-booking",
+            "step_kind": "capability",
+            "config": {
+              "capability_key": "domain.booking.post",
+              "capability_version": "1.0.0",
+              "payload_fields": {
+                "booking_id": "booking_review.booking_id",
+                "review_token": "booking_review.review_token"
+              },
+              "save_as": "booking_post",
+              "compensation_capability": {
+                "key": "domain.booking.reverse",
+                "version": "1.0.0",
+                "payload": {
+                  "reason": "workflow_compensation"
+                },
+                "payload_fields": {
+                  "booking_id": "booking_post.booking_id",
+                  "posting_reference": "booking_post.posting_reference"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "kind": "ingestion_trigger",
+      "key": "booking-document-intake",
+      "payload": {
+        "workflow_asset_key": "booking-review-post",
+        "document_types": [
+          "invoice"
+        ],
+        "is_active": true
+      }
+    }
+  ]
+}

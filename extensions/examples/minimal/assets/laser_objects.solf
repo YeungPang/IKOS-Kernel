@@ -1,0 +1,9 @@
+laser_application ≔ {
+    objectType: class,
+    application_name: Ø,
+    process_kind: Ø,
+    material: Ø,
+    component_ref: Ø
+}
+
+laser_cutting_applications ≔ [cutting, sheet_metal, tube_cutting]

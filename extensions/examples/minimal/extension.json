@@ -1,0 +1,71 @@
+{
+  "schema_version": "1",
+  "extension_key": "example-laser-domain",
+  "version": "1.0.0",
+  "display_name": "Example Laser Domain",
+  "description": "Illustrative SOLF and vocabulary extension package.",
+  "assets": [
+    {
+      "kind": "solf_script",
+      "key": "laser-objects",
+      "payload": {
+        "script_file": "assets/laser_objects.solf"
+      }
+    },
+    {
+      "kind": "solf_clause",
+      "key": "application-classifier",
+      "payload": {
+        "clause_name": "laser_application_classifier",
+        "clause_type": "resolve_policy",
+        "entity_class": "laser_application",
+        "clause_file": "assets/application_classifier.solf"
+      }
+    },
+    {
+      "kind": "workflow",
+      "key": "technical-review",
+      "payload": {
+        "workflow_name": "Laser technical review",
+        "description": "Illustrative clause-only workflow template.",
+        "domain": "laser_technology",
+        "input_contract": {
+          "required": ["application", "component"]
+        },
+        "output_contract": {
+          "fields": ["review_clause_invoked"]
+        },
+        "steps": [
+          {
+            "step_key": "classify-application",
+            "step_kind": "clause",
+            "clause_name": "laser_application_classifier",
+            "input_class": "laser_application",
+            "output_class": "laser_application"
+          }
+        ]
+      }
+    },
+    {
+      "kind": "semantic_term",
+      "key": "cutting-category",
+      "payload": {
+        "kind": "category",
+        "canonical_name": "laser_cutting",
+        "term_text": "laser cutting",
+        "language": "en"
+      }
+    },
+    {
+      "kind": "query_term_alias",
+      "key": "cutting-alias",
+      "payload": {
+        "alias_text": "laser cutting application",
+        "canonical_name": "laser_cutting",
+        "kind": "category",
+        "language": "en",
+        "priority": 50
+      }
+    }
+  ]
+}
