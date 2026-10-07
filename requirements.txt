@@ -1,3 +1,16 @@
-# Kernel-local dependency overlay; the host application supplies the other
-# runtime packages. Required by trusted capability JSON Schema validation.
+# Packages required to import the API, initialize the schema, and serve
+# queries against PostgreSQL and Qdrant. Install with:
+#   python -m venv .venv && .venv/bin/pip install -r requirements.txt
+#
+# PDF and office ingest needs the extra file: requirements-ingest.txt
+fastapi>=0.115,<1
+uvicorn>=0.32,<1
+python-multipart>=0.0.9
+pydantic>=2,<3
+psycopg2-binary>=2.9,<3
+python-dotenv>=1.0,<2
+cryptography>=43,<51
+requests>=2.32,<3
+qdrant-client>=1.12,<2
 jsonschema>=4.18.0,<5
+apscheduler>=3.10,<4

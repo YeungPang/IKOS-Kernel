@@ -1,0 +1,10 @@
+# Optional document-ingest stack. The API starts without these.
+#   .venv/bin/pip install -r requirements-ingest.txt
+# Also set LLAMA_CLOUD_API_KEY. spaCy and its language models are separate
+# and are loaded only when installed.
+-r requirements.txt
+llama-cloud-services>=0.6
+llama-index>=0.12
+pypdf>=5
+nest-asyncio>=1.6
+pillow>=10

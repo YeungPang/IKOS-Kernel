@@ -12,8 +12,13 @@ from pathlib import Path
 from typing import Any, Callable
 
 import psycopg2
-from psycopg2.extras import Json
+from psycopg2.extensions import register_adapter
+from psycopg2.extras import Json, UUID_adapter
 from ikos_config import DB_NAME, DB_HOST, DB_USER, DB_PASSWORD, DB_PORT
+
+# Adapt uuid.UUID on the way in. Do not register the UUID typecaster: existing
+# callers expect UUID columns to come back as strings.
+register_adapter(uuid.UUID, UUID_adapter)
 from security_context import LEGACY_TENANT_ID, get_security_context, get_tenant_id
 
 
@@ -1991,6 +1996,12 @@ def ensure_tenant_isolation_for_tables(
         }
         for table_name, id_columns in tenant_key_indexes.items():
             if table_name not in names:
+                continue
+            # Some of these tables are created by later component initializers
+            # (for example workflow_generated_python_script). Those callers
+            # re-enter this function after the table exists.
+            cursor.execute("SELECT to_regclass(%s)", (f"public.{table_name}",))
+            if cursor.fetchone()[0] is None:
                 continue
             cursor.execute(
                 f"CREATE UNIQUE INDEX IF NOT EXISTS uq_{table_name}_tenant_id ON {table_name}(tenant_id, {', '.join(id_columns)})"
