@@ -11,6 +11,18 @@ This folder is a kernel-focused snapshot extracted from IDMS-Demo.
 - API package and interaction runtime needed to expose kernel features
 - DDL variants under `ddl/`
 
+## Install
+
+Local setup is a virtualenv, PostgreSQL, and Qdrant. See [doc/INSTALL.md](doc/INSTALL.md).
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+cp .env.example .env
+.venv/bin/python scripts/initialize_ikos_runtime_schema.py --database ikos_dev
+.venv/bin/python ikos_api.py --host 127.0.0.1 --port 8010
+```
+
 ## DDL Options
 
 - `ddl/ikos_kernel_core.sql`

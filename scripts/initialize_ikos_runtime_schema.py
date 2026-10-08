@@ -55,17 +55,17 @@ def _ensure_component_tables(connection: Any) -> None:
 
     # These components create their persistence tables during ensure_tables().
     EventBus(db_connection_fn=connection_factory)
-    monitor = WorkflowMonitor(db_connection_factory)
+    monitor = WorkflowMonitor(connection_factory)
     reliability = WorkflowReliabilityManager(
-        db_connection_factory,
+        connection_factory,
         monitor=monitor,
         event_bus=None,
     )
-    WorkflowStateMachine(db_connection_factory)
-    AuditComplianceManager(db_connection_factory, reliability_manager=reliability)
-    NotifierEngine(db_connection_factory)
+    WorkflowStateMachine(connection_factory)
+    AuditComplianceManager(connection_factory, reliability_manager=reliability)
+    NotifierEngine(connection_factory)
     Notifier(db_connection_fn=connection_factory)
-    ProjectSimulator(db_connection_factory)
+    ProjectSimulator(connection_factory)
     TaskScheduler(lambda _query: {}, connection_factory).ensure_tables()
 
     # Interaction initialization normally runs as part of API tool construction;
