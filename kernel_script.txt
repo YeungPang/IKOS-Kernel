@@ -1,6 +1,8 @@
 # ---------------------------------------------------------------------------
 # IKOS kernel generic SOLF script
 # ---------------------------------------------------------------------------
+# Retained baseline source, composed once by solf_program with solf_script.txt.
+# Do not copy definitions between these files. See SOLF_PROGRAM.md.
 # Extracted from IDMS-Demo/solf_script.txt and reduced to the non-domain kernel
 # baseline only. This file intentionally excludes project/task/compliance/accounting
 # business logic and other domain-specific demos.

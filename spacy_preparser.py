@@ -67,9 +67,9 @@ def _normalize_language_tag(value: Any) -> str:
 
 def _model_candidates_for_language(language_hint: str | None) -> list[str]:
     normalized = _normalize_language_tag(language_hint)
-    env_model = str(os.getenv("IDMS_SPACY_MODEL", "")).strip()
-    strict_language = str(os.getenv("IDMS_SPACY_STRICT_LANGUAGE", "false")).strip().lower() in {"1", "true", "yes", "on"}
-    allow_cross_language = str(os.getenv("IDMS_SPACY_ALLOW_CROSS_LANGUAGE_FALLBACK", "false")).strip().lower() in {"1", "true", "yes", "on"}
+    env_model = str(os.getenv("IKOS_SPACY_MODEL", "")).strip()
+    strict_language = str(os.getenv("IKOS_SPACY_STRICT_LANGUAGE", "false")).strip().lower() in {"1", "true", "yes", "on"}
+    allow_cross_language = str(os.getenv("IKOS_SPACY_ALLOW_CROSS_LANGUAGE_FALLBACK", "false")).strip().lower() in {"1", "true", "yes", "on"}
 
     candidates: list[str] = []
     if env_model:

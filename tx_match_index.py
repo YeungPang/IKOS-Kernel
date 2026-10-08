@@ -61,14 +61,14 @@ def _normalize_collection_name(value: Any) -> str:
 
 
 def _resolve_default_collection() -> str:
-    configured = str(os.getenv("IDMS_MATCH_QDRANT_COLLECTION", "")).strip()
+    configured = str(os.getenv("IKOS_MATCH_QDRANT_COLLECTION", "")).strip()
     if configured:
         return configured
     return TX_MATCH_QDRANT_COLLECTION
 
 
 def _allow_collection_override() -> bool:
-    return str(os.getenv("IDMS_MATCH_ALLOW_COLLECTION_OVERRIDE", "true")).strip().lower() in {
+    return str(os.getenv("IKOS_MATCH_ALLOW_COLLECTION_OVERRIDE", "true")).strip().lower() in {
         "1",
         "true",
         "yes",
@@ -77,7 +77,7 @@ def _allow_collection_override() -> bool:
 
 
 def _allowed_purposes() -> set[str]:
-    raw = str(os.getenv("IDMS_MATCH_ALLOWED_PURPOSES", "transaction_match")).strip()
+    raw = str(os.getenv("IKOS_MATCH_ALLOWED_PURPOSES", "transaction_match")).strip()
     if not raw:
         return {"transaction_match"}
     return {

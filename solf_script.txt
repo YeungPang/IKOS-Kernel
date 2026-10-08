@@ -1,0 +1,329 @@
+# IKOS-BUNDLED-BASELINE: kernel_script.txt
+# Canonical bundled entry point. The fixed marker composes the retained generic
+# baseline via solf_program; definitions below are additions, never copied peers.
+# No business-domain adapters, customer identifiers, tax identifiers, or demos.
+
+person_resolve_policy(_entity_payload) ⦃
+    ↲({
+        threshold: 0.78,
+        low_threshold: 0.70,
+        high_threshold: 0.78,
+        margin: 0.10,
+        max_candidates: 20,
+        name_similarity_weight: 0.30,
+        strong_match_score: 0.55,
+        medium_match_score: 0.18,
+        strong_keys: [email, phone, birth_date, birth_place],
+        medium_keys: [address]
+    })
+⦄
+
+organization_resolve_policy(_entity_payload) ⦃
+    ↲({
+        threshold: 0.76,
+        low_threshold: 0.68,
+        high_threshold: 0.76,
+        margin: 0.10,
+        max_candidates: 20,
+        name_similarity_weight: 0.40,
+        strong_match_score: 0.50,
+        medium_match_score: 0.20,
+        strong_keys: [registration_no],
+        medium_keys: [legal_name, address, country]
+    })
+⦄
+
+company_resolve_policy(_entity_payload) ⦃↲(organization_resolve_policy(_entity_payload))⦄
+
+resolve_category_document(_context) ⦃
+    ↲({
+        preferred_category: document_correspondence,
+        source_scope: document_kb,
+        access_method: rag,
+        reason: document_hint_or_provenance_constraint
+    })
+⦄
+
+resolve_category_external(_context) ⦃
+    ↲({
+        preferred_category: external_operational_data,
+        source_scope: external,
+        access_method: sql,
+        reason: collection_or_aggregate_query
+    })
+⦄
+
+resolve_category_internal(_context) ⦃
+    ↲({
+        preferred_category: internal_entity_registry,
+        source_scope: internal,
+        access_method: semantic_lookup,
+        reason: named_entity_scalar_fact
+    })
+⦄
+
+can_update_entity(_payload) ⦃
+    ↲({mode: allow, reason: default_can_update_entity, allowed: true})
+⦄
+
+can_reverse_mutation(_payload) ⦃
+    ↲({mode: allow, reason: default_can_reverse_mutation, allowed: true})
+⦄
+
+can_record_approval(_payload) ⦃
+    ↲({mode: allow, reason: default_can_record_approval, allowed: true})
+⦄
+
+action_plan(reverse_mutation, _args) ⦃
+    ↲({action: reverse_mutation, guard: can_reverse_mutation, args: _args})
+⦄
+
+action_plan(update_entity, _args) ⦃↲(update_entity_plan(_args))⦄
+action_plan(record_approval, _args) ⦃↲(record_approval_plan(_args))⦄
+
+update_entity_plan(_args) ⦃
+    (_entity_type ≔ _args[entity_type]) ⋀
+    (_entity_id ≔ _args[entity_id]) ⋀
+    (_field ≔ _args[field]) ⋀
+    (_new_value ≔ _args[new_value]) ⋀
+    ↲({
+        action: update_entity,
+        guard: can_update_entity,
+        sql_builder: sql_plan_update_entity_by_id,
+        args: {entity_type: _entity_type, entity_id: _entity_id, field: _field, new_value: _new_value}
+    })
+⦄
+
+update_entity_plan(_args) ⦃
+    (_entity_type ≔ _args[entity_type]) ⋀
+    (_natural_key_field ≔ _args[natural_key_field]) ⋀
+    (_natural_key_value ≔ _args[natural_key_value]) ⋀
+    (_field ≔ _args[field]) ⋀
+    (_new_value ≔ _args[new_value]) ⋀
+    ↲({
+        action: update_entity,
+        guard: can_update_entity,
+        sql_builder: sql_plan_update_entity_by_natural_key,
+        args: {
+            entity_type: _entity_type,
+            natural_key_field: _natural_key_field,
+            natural_key_value: _natural_key_value,
+            field: _field,
+            new_value: _new_value
+        }
+    })
+⦄
+
+sql_plan_update_entity_by_id(_args) ⦃
+    (_entity_type ≔ _args[entity_type]) ⋀
+    (_entity_id ≔ _args[entity_id]) ⋀
+    (_field ≔ _args[field]) ⋀
+    (_new_value ≔ _args[new_value]) ⋀
+    ↲({operation: update, table: _entity_type, where: {id: _entity_id}, values: {[_field]: _new_value}, returning: [id]})
+⦄
+
+sql_plan_update_entity_by_natural_key(_args) ⦃
+    (_entity_type ≔ _args[entity_type]) ⋀
+    (_natural_key_field ≔ _args[natural_key_field]) ⋀
+    (_natural_key_value ≔ _args[natural_key_value]) ⋀
+    (_field ≔ _args[field]) ⋀
+    (_new_value ≔ _args[new_value]) ⋀
+    ↲({operation: update, table: _entity_type, where: {[_natural_key_field]: _natural_key_value}, values: {[_field]: _new_value}, returning: [id]})
+⦄
+
+record_approval_plan(_args) ⦃
+    (_approval_no ≔ _args[approval_no]) ⋀
+    (_case_ref ≔ _args[case_ref]) ⋀
+    (_approver_ref ≔ _args[approver_ref]) ⋀
+    (_decision ≔ _args[decision]) ⋀
+    (_decision_at ≔ _args[decision_at]) ⋀
+    (_comment ≔ _args[comment]) ⋀
+    (_escalation_level ≔ _args[escalation_level]) ⋀
+    ↲({
+        action: record_approval,
+        guard: can_record_approval,
+        sql_builder: sql_plan_record_approval,
+        args: {
+            approval_no: _approval_no,
+            case_ref: _case_ref,
+            approver_ref: _approver_ref,
+            decision: _decision,
+            decision_at: _decision_at,
+            comment: _comment,
+            escalation_level: _escalation_level
+        }
+    })
+⦄
+
+sql_plan_record_approval(_args) ⦃
+    (_approval_no ≔ _args[approval_no]) ⋀
+    (_case_ref ≔ _args[case_ref]) ⋀
+    (_approver_ref ≔ _args[approver_ref]) ⋀
+    (_decision ≔ _args[decision]) ⋀
+    (_decision_at ≔ _args[decision_at]) ⋀
+    (_comment ≔ _args[comment]) ⋀
+    (_escalation_level ≔ _args[escalation_level]) ⋀
+    ↲({
+        operation: insert,
+        table: approvals,
+        values: {
+            approval_no: _approval_no,
+            case_ref: _case_ref,
+            approver_ref: _approver_ref,
+            decision: _decision,
+            decision_at: _decision_at,
+            comment: _comment,
+            escalation_level: _escalation_level
+        },
+        returning: [id]
+    })
+⦄
+
+scheduler_command(list_jobs, _args) ⦃↲({command: list_jobs, args: _args})⦄
+
+person ≔ {
+    objectType: class,
+    extending: entity,
+    birth_date: Ø,
+    birth_place: Ø,
+    gender: Ø,
+    nationality: Ø,
+    address: Ø,
+    email: Ø,
+    phone: Ø
+}
+
+organization ≔ {
+    objectType: class,
+    extending: entity,
+    org_type: Ø,
+    sector: Ø,
+    jurisdiction: Ø,
+    parent_org_ref: Ø,
+    website: Ø,
+    address: Ø,
+    country: Ø,
+    email: Ø,
+    phone: Ø,
+    registration_no: Ø
+}
+
+company ≔ {
+    objectType: class,
+    extending: organization,
+    company_type: Ø
+}
+
+document ≔ {
+    objectType: class,
+    extending: entity,
+    document_no: Ø,
+    document_type: Ø,
+    issue_date: Ø,
+    valid_from: Ø,
+    valid_until: Ø,
+    language: Ø,
+    source_system: Ø,
+    status: Ø
+}
+
+email ≔ {
+    objectType: class,
+    extending: document,
+    subject: Ø,
+    sender_ref: Ø,
+    recipient_ref: Ø,
+    sent_at: Ø,
+    thread_ref: Ø
+}
+
+event ≔ {
+    objectType: class,
+    extending: entity,
+    event_type: Ø,
+    event_date: Ø,
+    venue_ref: Ø,
+    organizer_ref: Ø,
+    status: Ø
+}
+
+meeting ≔ {
+    objectType: class,
+    extending: event,
+    meeting_no: Ø,
+    agenda: Ø,
+    minutes_ref: Ø,
+    chair_ref: Ø
+}
+
+location ≔ {
+    objectType: class,
+    extending: entity,
+    address_line_1: Ø,
+    address_line_2: Ø,
+    postal_code: Ø,
+    city: Ø,
+    state_region: Ø,
+    country: Ø
+}
+
+venue ≔ {
+    objectType: class,
+    extending: location,
+    venue_name: Ø,
+    venue_type: Ø,
+    building: Ø,
+    room: Ø,
+    floor: Ø,
+    capacity: Ø,
+    status: Ø
+}
+
+workflow_case ≔ {
+    objectType: class,
+    extending: entity,
+    case_no: Ø,
+    case_type: Ø,
+    subject_ref: Ø,
+    initiated_by_ref: Ø,
+    current_step: Ø,
+    sla_due_at: Ø,
+    status: Ø
+}
+
+approval ≔ {
+    objectType: class,
+    extending: entity,
+    approval_no: Ø,
+    case_ref: Ø,
+    approver_ref: Ø,
+    decision: Ø,
+    decision_at: Ø,
+    comment: Ø,
+    escalation_level: Ø
+}
+
+workflow_case_is_overdue(_status, _now_ts, _sla_due_ts) ⦃
+    ↲((_status ≠ closed) ⋀ (_status ≠ cancelled) ⋀ (_now_ts > _sla_due_ts))
+⦄
+
+approval_is_final(_decision, _escalation_level) ⦃
+    ↲(((_decision = approved) ⋁ (_decision = rejected)) ⋀ (_escalation_level = 0))
+⦄
+
+workflow_case_status_by_ref ≔ {}
+workflow_case_sla_due_by_ref ≔ {}
+approval_decision_by_ref ≔ {}
+approval_escalation_level_by_ref ≔ {}
+
+workflow_case_is_overdue_by_ref(_case_ref, _now_ts) ⦃
+    (_status ≔ workflow_case_status_by_ref[_case_ref]) ⋀
+    (_sla_due_ts ≔ workflow_case_sla_due_by_ref[_case_ref]) ⋀
+    workflow_case_is_overdue(_status, _now_ts, _sla_due_ts)
+⦄
+
+approval_is_final_by_ref(_approval_ref) ⦃
+    (_decision ≔ approval_decision_by_ref[_approval_ref]) ⋀
+    (_escalation_level ≔ approval_escalation_level_by_ref[_approval_ref]) ⋀
+    approval_is_final(_decision, _escalation_level)
+⦄

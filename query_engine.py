@@ -1051,11 +1051,11 @@ class QueryEngine:
 
     def _resolve_source_password(self, source_key: str) -> str:
         sanitized = re.sub(r"[^A-Za-z0-9]", "_", str(source_key or "").upper())
-        per_source_key = f"IDMS_SOURCE_DB_PASSWORD_{sanitized}" if sanitized else ""
+        per_source_key = f"IKOS_SOURCE_DB_PASSWORD_{sanitized}" if sanitized else ""
         return (
             (os.getenv(per_source_key, "") if per_source_key else "")
-            or os.getenv("IDMS_SOURCE_DB_PASSWORD", "")
-            or os.getenv("IDMS_DB_PASSWORD", "")
+            or os.getenv("IKOS_SOURCE_DB_PASSWORD", "")
+            or os.getenv("IKOS_DB_PASSWORD", "")
         )
 
     @staticmethod
@@ -1382,7 +1382,7 @@ class QueryEngine:
         password = self._resolve_source_password(source_key)
         if not password:
             raise RuntimeError(
-                f"Missing source DB password. Set IDMS_SOURCE_DB_PASSWORD_{re.sub(r'[^A-Za-z0-9]', '_', source_key.upper())} or IDMS_SOURCE_DB_PASSWORD"
+                f"Missing source DB password. Set IKOS_SOURCE_DB_PASSWORD_{re.sub(r'[^A-Za-z0-9]', '_', source_key.upper())} or IKOS_SOURCE_DB_PASSWORD"
             )
 
         schema_name = str(query.get("schema_name") or "").strip()

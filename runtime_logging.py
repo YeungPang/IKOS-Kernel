@@ -65,14 +65,14 @@ class DailyDatedFileHandler(Handler):
 def configure_logging(level: int | str | None = None) -> logging.Logger:
     global _CONFIGURED
     root = logging.getLogger()
-    resolved_level = level if isinstance(level, int) else getattr(logging, str(level or os.getenv("IDMS_LOG_LEVEL", "INFO")).upper(), logging.INFO)
+    resolved_level = level if isinstance(level, int) else getattr(logging, str(level or os.getenv("IKOS_LOG_LEVEL", "INFO")).upper(), logging.INFO)
     root.setLevel(resolved_level)
 
     if _CONFIGURED:
         return root
 
     formatter = logging.Formatter("%(asctime)s %(levelname)s [%(name)s] %(message)s")
-    log_dir = Path(os.getenv("IDMS_LOG_DIR", "log"))
+    log_dir = Path(os.getenv("IKOS_LOG_DIR", "log"))
 
     file_handler = DailyDatedFileHandler(log_dir=log_dir, prefix="log")
     file_handler.setFormatter(formatter)

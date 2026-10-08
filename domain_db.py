@@ -941,10 +941,10 @@ def update_solf_schema_promotion_batch_audit_link(
 
 
 def _get_coa_profile_name() -> str:
-    requested = str(os.getenv("IDMS_COA_PROFILE", "swiss_sme") or "swiss_sme").strip().lower()
+    requested = str(os.getenv("IKOS_COA_PROFILE", "swiss_sme") or "swiss_sme").strip().lower()
     if requested in CHART_OF_ACCOUNTS_PROFILES:
         return requested
-    LOGGER.warning("Unknown IDMS_COA_PROFILE='%s'; falling back to swiss_sme", requested)
+    LOGGER.warning("Unknown IKOS_COA_PROFILE='%s'; falling back to swiss_sme", requested)
     return "swiss_sme"
 
 
@@ -953,10 +953,10 @@ def get_seed_records_for_profile(profile_name: str) -> list[dict[str, Any]]:
 
 
 def _get_hr_profile_name() -> str:
-    requested = str(os.getenv("IDMS_HR_PROFILE", "swiss_sme") or "swiss_sme").strip().lower()
+    requested = str(os.getenv("IKOS_HR_PROFILE", "swiss_sme") or "swiss_sme").strip().lower()
     if requested in HR_MASTER_PROFILES:
         return requested
-    LOGGER.warning("Unknown IDMS_HR_PROFILE='%s'; falling back to swiss_sme", requested)
+    LOGGER.warning("Unknown IKOS_HR_PROFILE='%s'; falling back to swiss_sme", requested)
     return "swiss_sme"
 
 

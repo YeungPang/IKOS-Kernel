@@ -186,7 +186,7 @@ class Notifier:
 
 
 def create_notifier_from_config(db_connection_fn=None) -> Notifier:
-    raw = str(os.getenv("IDMS_NOTIFICATION_CHANNELS", "log")).strip().lower()
+    raw = str(os.getenv("IKOS_NOTIFICATION_CHANNELS", "log")).strip().lower()
     enabled = {x.strip() for x in raw.split(",") if x.strip()}
 
     channels: dict[NotificationChannel, NotificationBase] = {}
@@ -195,11 +195,11 @@ def create_notifier_from_config(db_connection_fn=None) -> Notifier:
         channels[NotificationChannel.LOG] = LogNotifier()
 
     if "email" in enabled:
-        smtp_host = os.getenv("IDMS_SMTP_HOST", "localhost")
-        smtp_port = int(os.getenv("IDMS_SMTP_PORT", "587"))
-        from_addr = os.getenv("IDMS_EMAIL_FROM", "idms-notifications@example.com")
-        user = os.getenv("IDMS_EMAIL_USER", "") or None
-        password = os.getenv("IDMS_EMAIL_PASSWORD", "") or None
+        smtp_host = os.getenv("IKOS_SMTP_HOST", "localhost")
+        smtp_port = int(os.getenv("IKOS_SMTP_PORT", "587"))
+        from_addr = os.getenv("IKOS_EMAIL_FROM", "idms-notifications@example.com")
+        user = os.getenv("IKOS_EMAIL_USER", "") or None
+        password = os.getenv("IKOS_EMAIL_PASSWORD", "") or None
         channels[NotificationChannel.EMAIL] = EmailNotifier(
             smtp_host=smtp_host,
             smtp_port=smtp_port,
@@ -209,7 +209,7 @@ def create_notifier_from_config(db_connection_fn=None) -> Notifier:
         )
 
     if "webhook" in enabled:
-        webhook_url = os.getenv("IDMS_WEBHOOK_URL", "").strip()
+        webhook_url = os.getenv("IKOS_WEBHOOK_URL", "").strip()
         if webhook_url:
             channels[NotificationChannel.WEBHOOK] = WebhookNotifier(webhook_url=webhook_url)
 

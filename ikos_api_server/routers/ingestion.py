@@ -37,7 +37,7 @@ def _is_truthy(value: str) -> bool:
 
 
 def _require_maintenance_token(admin_token: str = "") -> None:
-    required_token = str(os.getenv("IDMS_MAINTENANCE_TOKEN", "")).strip()
+    required_token = str(os.getenv("IKOS_MAINTENANCE_TOKEN", "")).strip()
     if required_token and str(admin_token or "") != required_token:
         raise HTTPException(status_code=403, detail="Invalid maintenance token")
 
@@ -59,8 +59,8 @@ def list_ingestion_system_rules() -> dict[str, Any]:
 @router.get("/markdown-policy")
 def get_ingestion_markdown_policy() -> dict[str, Any]:
     """Return current markdown parser policy and effective parser selection."""
-    markdown_rule = os.getenv("IDMS_INGESTION_MARKDOWN_RULE", "force_pparser").strip().lower()
-    force_pparser_env = _is_truthy(os.getenv("IDMS_FORCE_PPARSER", ""))
+    markdown_rule = os.getenv("IKOS_INGESTION_MARKDOWN_RULE", "force_pparser").strip().lower()
+    force_pparser_env = _is_truthy(os.getenv("IKOS_FORCE_PPARSER", ""))
     force_by_rule = markdown_rule in {"force_pparser", "pparser_only", "complex_tables"}
     force_pparser = force_by_rule or force_pparser_env
 
@@ -116,8 +116,8 @@ def _raise_ingest_http_error(exc: Exception) -> None:
         raise HTTPException(
             status_code=503,
             detail=(
-                "Database connection failed. Check IDMS_DB_HOST, IDMS_DB_PORT, IDMS_DB_NAME, "
-                "IDMS_DB_USER, and IDMS_DB_PASSWORD in your .env."
+                "Database connection failed. Check IKOS_DB_HOST, IKOS_DB_PORT, IKOS_DB_NAME, "
+                "IKOS_DB_USER, and IKOS_DB_PASSWORD in your .env."
             ),
         ) from exc
 

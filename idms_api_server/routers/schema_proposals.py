@@ -11,6 +11,7 @@ from fastapi.responses import PlainTextResponse
 import domain_db
 from ingest import parse_solf_classes
 import object_db
+from solf_program import PROGRAM_PATH, read_program
 from ikos_api_server.schemas import (
     SolfAttributeProposalStatusRequest,
     SolfSchemaPromotionBatchAuditLinkRequest,
@@ -24,7 +25,7 @@ LOGGER = logging.getLogger("idms.api")
 
 
 def _solf_script_path() -> Path:
-    return Path(__file__).resolve().parents[2] / "solf_script.txt"
+    return PROGRAM_PATH
 
 
 def _sha256_text(text: str) -> str:
@@ -232,7 +233,7 @@ def get_solf_patch_draft(class_name: str | None = None) -> dict[str, Any]:
     connection = object_db.get_connection()
     try:
         approved_extensions = domain_db.get_approved_solf_attribute_extensions(connection)
-        script_text = _solf_script_path().read_text(encoding="utf-8")
+        script_text = read_program(_solf_script_path())
         class_defs = parse_solf_classes(script_text)
         result = _build_patch_draft_result(approved_extensions, class_defs, class_name=class_name)
 
@@ -287,7 +288,7 @@ def create_schema_promotion_batch(payload: SolfSchemaPromotionBatchCreateRequest
             proposal_ids.append(proposal_id)
             approved_extensions.setdefault(current_class_name, []).append(attribute_name)
 
-        script_text = _solf_script_path().read_text(encoding="utf-8")
+        script_text = read_program(_solf_script_path())
         class_defs = parse_solf_classes(script_text)
         patch_result = _build_patch_draft_result(approved_extensions, class_defs, class_name=payload.class_name or None)
         patch_preview = str(patch_result.get("solf_patch_preview") or "")
@@ -369,7 +370,7 @@ def link_schema_promotion_batch_audit(batch_id: int, payload: SolfSchemaPromotio
         solf_path = Path(payload.solf_script_path).expanduser() if str(payload.solf_script_path or "").strip() else _solf_script_path()
         solf_hash = str(payload.solf_script_hash or "").strip()
         if not solf_hash:
-            solf_hash = _sha256_text(solf_path.read_text(encoding="utf-8"))
+            solf_hash = _sha256_text(read_program(solf_path))
 
         audit_metadata = {
             "audit_linked_by": str(payload.linked_by or "api:user").strip() or "api:user",

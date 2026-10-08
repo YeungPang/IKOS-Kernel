@@ -126,7 +126,7 @@ class WorkflowCapabilityIssueJsonRequest(WorkflowCapabilityValidationRequest):
 
 class WorkflowCapabilityIssueCreateRequest(WorkflowCapabilityIssueJsonRequest):
     dry_run: bool = Field(default=True, description="When true, only returns payload and does not call GitHub")
-    github_token: str | None = Field(default=None, description="Optional GitHub token override; env IDMS_GITHUB_TOKEN preferred")
+    github_token: str | None = Field(default=None, description="Optional GitHub token override; env IKOS_GITHUB_TOKEN preferred")
     github_api_base_url: str | None = Field(default=None, description="Optional GitHub API base URL override")
 
 
@@ -1057,9 +1057,9 @@ def _build_github_issue_payload(
     github_issue: dict[str, Any],
 ) -> dict[str, Any]:
     workflow_domain = str(validation_result.get("workflow_domain") or "").strip()
-    owner = str(payload.github_owner or os.getenv("IDMS_GITHUB_OWNER") or "").strip()
-    repo = str(payload.github_repo or os.getenv("IDMS_GITHUB_REPO") or "").strip()
-    repository = str(payload.github_repository or os.getenv("IDMS_GITHUB_REPOSITORY") or "").strip()
+    owner = str(payload.github_owner or os.getenv("IKOS_GITHUB_OWNER") or "").strip()
+    repo = str(payload.github_repo or os.getenv("IKOS_GITHUB_REPO") or "").strip()
+    repository = str(payload.github_repository or os.getenv("IKOS_GITHUB_REPOSITORY") or "").strip()
     if repository and "/" in repository:
         parsed_owner, parsed_repo = repository.split("/", 1)
         owner = owner or parsed_owner.strip()
@@ -1130,11 +1130,11 @@ def validate_workflow_capability_issue_create(payload: WorkflowCapabilityIssueCr
                 "result": issue_payload,
             }
 
-        token = str(payload.github_token or os.getenv("IDMS_GITHUB_TOKEN") or "").strip()
+        token = str(payload.github_token or os.getenv("IKOS_GITHUB_TOKEN") or "").strip()
         if not token:
-            raise HTTPException(status_code=400, detail="GitHub token required (set IDMS_GITHUB_TOKEN or provide github_token)")
+            raise HTTPException(status_code=400, detail="GitHub token required (set IKOS_GITHUB_TOKEN or provide github_token)")
 
-        api_base = str(payload.github_api_base_url or os.getenv("IDMS_GITHUB_API_BASE_URL") or "https://api.github.com").strip().rstrip("/")
+        api_base = str(payload.github_api_base_url or os.getenv("IKOS_GITHUB_API_BASE_URL") or "https://api.github.com").strip().rstrip("/")
         github_request_body = {
             "title": str(create_issue_payload.get("title") or "").strip(),
             "body": str(create_issue_payload.get("body") or "").strip(),

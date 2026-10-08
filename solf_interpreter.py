@@ -1296,7 +1296,7 @@ class SOLFInterpreter:
             operator, operands = predicate
             
             # Evaluate operands first (except for special cases)
-            if operator not in ['≔', '≪', '∃', '⥹', '⥻']:  # Don't evaluate LHS for assignment-like operators
+            if operator not in ['≔', '≪', '∃', '⥹', '⥻', 'ℳ']:  # Dict pairs need value/method-aware evaluation
                 if isinstance(operands, list):
                     evaluated_operands = []
                     for operand_idx, operand in enumerate(operands):
@@ -1846,27 +1846,26 @@ class SOLFInterpreter:
             elif operator == 'ℳ':  # Dictionary creation
                 result = {}
                 # Preferred parser shape: [['k1', v1], ['k2', v2], ...]
-                if all(isinstance(item, (list, tuple)) and len(item) == 2 for item in evaluated_operands):
-                    for pair_idx, (key, value) in enumerate(evaluated_operands):
-                        if isinstance(key, (tuple, list)):
-                            key = self._evaluate_child(key, clause, [1, 0])
-                        if isinstance(value, SOLFReturnValue):
-                            raw_pair = None
-                            if isinstance(operands, list) and pair_idx < len(operands):
-                                raw_pair = operands[pair_idx]
-                            if isinstance(raw_pair, (list, tuple)) and len(raw_pair) == 2:
-                                value = raw_pair[1]
-                            else:
-                                value = value.value
-                        if isinstance(value, (tuple, list)):
-                            value = self._evaluate_child(value, clause, [1, 1])
-                        if isinstance(value, SOLFReturnValue):
-                            raw_pair = None
-                            if isinstance(operands, list) and pair_idx < len(operands):
-                                raw_pair = operands[pair_idx]
-                            if isinstance(raw_pair, (list, tuple)) and len(raw_pair) == 2:
-                                value = raw_pair[1]
-                            else:
+                if all(isinstance(item, (list, tuple)) and len(item) == 2 for item in operands):
+                    is_object = any(pair[0] == 'objectType' for pair in operands)
+                    for pair_idx, (key, value) in enumerate(operands):
+                        # Parser notation {[_field]: value} is a computed scalar
+                        # key, not a list-valued key serialized to a string.
+                        if (isinstance(key, tuple) and len(key) == 2
+                                and key[0] == 'ℒ' and len(key[1]) == 1):
+                            key = self._evaluate_child(key[1][0], clause, [1, pair_idx, 0, 1, 0])
+                        elif isinstance(key, (tuple, list)):
+                            key = self._evaluate_child(key, clause, [1, pair_idx, 0])
+                        # Class/instance method ASTs are definitions, not calls.
+                        # Never execute them merely to discover a return value.
+                        method_literal = (
+                            isinstance(value, tuple) and len(value) == 2
+                            and (value[0] == '↲' or (is_object and isinstance(value[0], str)
+                                 and re.fullmatch(r'[A-Za-z_][A-Za-z0-9_.]*', value[0])))
+                        ) or (is_object and isinstance(value, list))
+                        if not method_literal:
+                            value = self._evaluate_child(value, clause, [1, pair_idx, 1])
+                            if isinstance(value, SOLFReturnValue):
                                 value = value.value
                         if isinstance(key, (list, dict, set)):
                             key = str(key)
@@ -1874,10 +1873,10 @@ class SOLFInterpreter:
                     return result
 
                 # Backward-compatible flat shape: [k1, v1, k2, v2, ...]
-                for i in range(0, len(evaluated_operands), 2):
-                    if i + 1 < len(evaluated_operands):
-                        key = evaluated_operands[i]
-                        value = evaluated_operands[i + 1]
+                for i in range(0, len(operands), 2):
+                    if i + 1 < len(operands):
+                        key = self._evaluate_child(operands[i], clause, [1, i])
+                        value = self._evaluate_child(operands[i + 1], clause, [1, i + 1])
                         if isinstance(key, (list, dict, set)):
                             key = str(key)
                         result[key] = value
@@ -2371,7 +2370,9 @@ class SOLFInterpreter:
             self.clauses.clear()
             self.variables.clear()
 
-        script = program_script or ''
+        from solf_program import expand_bundled_program
+
+        script = expand_bundled_program(program_script or '')
         remaining_script, clauses = self._extract_inline_script_clauses(script)
 
         if clauses:
@@ -2414,10 +2415,9 @@ class SOLFInterpreter:
 
     def load_program_file(self, file_path: str, clear_existing: bool = False) -> Dict[str, int]:
         """Load Program-mode definitions from a text file."""
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f'Program file not found: {file_path}')
-        with open(file_path, 'r', encoding='utf-8') as f:
-            script = f.read()
+        from solf_program import read_program
+
+        script = read_program(file_path)
         return self.load_program_script(script, clear_existing=clear_existing)
     
     def _parse_fact(self, fact_data):

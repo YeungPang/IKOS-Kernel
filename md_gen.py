@@ -26,10 +26,10 @@ load_dotenv(BASE_DIR / ".env")
 LOGGER = logging.getLogger("idms.md_gen")
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
-OPENROUTER_URL = os.getenv("IDMS_OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1").rstrip("/") + "/chat/completions"
-OPENROUTER_VISION_MODEL = os.getenv("IDMS_OPENROUTER_MD_VISION_MODEL", "openai/gpt-4o")
-OPENROUTER_TEXT_MODEL = os.getenv("IDMS_OPENROUTER_MD_TEXT_MODEL", "openai/gpt-4o-mini")
-INGESTION_MARKDOWN_RULE = os.getenv("IDMS_INGESTION_MARKDOWN_RULE", "force_pparser").strip().lower()
+OPENROUTER_URL = os.getenv("IKOS_OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1").rstrip("/") + "/chat/completions"
+OPENROUTER_VISION_MODEL = os.getenv("IKOS_OPENROUTER_MD_VISION_MODEL", "openai/gpt-4o")
+OPENROUTER_TEXT_MODEL = os.getenv("IKOS_OPENROUTER_MD_TEXT_MODEL", "openai/gpt-4o-mini")
+INGESTION_MARKDOWN_RULE = os.getenv("IKOS_INGESTION_MARKDOWN_RULE", "force_pparser").strip().lower()
 
 LLAMA_CLOUD_API_KEY = os.getenv("LLAMA_CLOUD_API_KEY", "")
 
@@ -53,7 +53,7 @@ pparser = LlamaParse(
     premium_mode=True
 )
 
-LLAMAPARSE_TIMEOUT_SECONDS = int(str(os.getenv("IDMS_LLAMAPARSE_TIMEOUT_SECONDS", "420")).strip() or "420")
+LLAMAPARSE_TIMEOUT_SECONDS = int(str(os.getenv("IKOS_LLAMAPARSE_TIMEOUT_SECONDS", "420")).strip() or "420")
 
 
 def _is_truthy(value: str) -> bool:
@@ -71,7 +71,7 @@ def _should_force_pparser(parser_rule_override: str | None = None) -> bool:
         return True
     if effective_rule in {"mparser", "standard", "default"}:
         return False
-    return _is_truthy(os.getenv("IDMS_FORCE_PPARSER", ""))
+    return _is_truthy(os.getenv("IKOS_FORCE_PPARSER", ""))
 
 
 def _select_markdown_parser(parser_rule_override: str | None = None) -> tuple[LlamaParse, str]:

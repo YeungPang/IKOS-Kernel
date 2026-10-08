@@ -203,7 +203,7 @@ class AttributeEmbeddingIndex:
         self.logger = logging.getLogger("attribute_embedding_index")
         resolved_embedding_model = str(
             embedding_model
-            or os.getenv("IDMS_OPENROUTER_EMBEDDING_MODEL", "openai/text-embedding-3-large")
+            or os.getenv("IKOS_OPENROUTER_EMBEDDING_MODEL", "openai/text-embedding-3-large")
         ).strip()
         if not resolved_embedding_model:
             resolved_embedding_model = "openai/text-embedding-3-large"
@@ -283,19 +283,19 @@ class AttributeEmbeddingIndex:
 
     @staticmethod
     def _seed_aliases_enabled() -> bool:
-        return str(os.getenv("IDMS_ENABLE_SEED_ATTRIBUTE_ALIASES", "true")).strip().lower() in {
+        return str(os.getenv("IKOS_ENABLE_SEED_ATTRIBUTE_ALIASES", "true")).strip().lower() in {
             "1", "true", "yes", "on"
         }
 
     @staticmethod
     def _llm_synonym_flag_enabled() -> bool:
-        return str(os.getenv("IDMS_ENABLE_DYNAMIC_ATTRIBUTE_LLM_SYNONYMS", "true")).strip().lower() in {
+        return str(os.getenv("IKOS_ENABLE_DYNAMIC_ATTRIBUTE_LLM_SYNONYMS", "true")).strip().lower() in {
             "1", "true", "yes", "on"
         }
 
     @staticmethod
     def _llm_synonym_limit() -> int:
-        raw = str(os.getenv("IDMS_DYNAMIC_ATTRIBUTE_LLM_SYNONYM_LIMIT", "200")).strip()
+        raw = str(os.getenv("IKOS_DYNAMIC_ATTRIBUTE_LLM_SYNONYM_LIMIT", "200")).strip()
         try:
             return max(0, int(raw))
         except Exception:
@@ -766,7 +766,7 @@ class AttributeEmbeddingIndex:
             return False
 
         recreate_on_mismatch = str(
-            os.getenv("IDMS_RECREATE_ATTRIBUTE_EMBEDDING_COLLECTION_ON_DIM_MISMATCH", "false")
+            os.getenv("IKOS_RECREATE_ATTRIBUTE_EMBEDDING_COLLECTION_ON_DIM_MISMATCH", "false")
         ).strip().lower() in {"1", "true", "yes", "on"}
 
         try:

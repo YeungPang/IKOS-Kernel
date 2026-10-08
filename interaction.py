@@ -154,20 +154,20 @@ class IDMSInteractionTools:
         self._solf_runtime_lock = threading.Lock()
         self._solf_retry_cooldown_seconds = max(
             0,
-            int(str(os.getenv("IDMS_SOLF_RETRY_COOLDOWN_SEC", "30") or "30").strip() or "30"),
+            int(str(os.getenv("IKOS_SOLF_RETRY_COOLDOWN_SEC", "30") or "30").strip() or "30"),
         )
         self._solf_load_timeout_seconds = max(
             1,
-            int(str(os.getenv("IDMS_SOLF_LOAD_TIMEOUT_SEC", "8") or "8").strip() or "8"),
+            int(str(os.getenv("IKOS_SOLF_LOAD_TIMEOUT_SEC", "8") or "8").strip() or "8"),
         )
         self._last_nl_request_text = ""
         try:
-            threshold_raw = str(os.getenv("IDMS_SEMANTIC_BEST_EFFORT_THRESHOLD", "0.88") or "0.88").strip()
+            threshold_raw = str(os.getenv("IKOS_SEMANTIC_BEST_EFFORT_THRESHOLD", "0.88") or "0.88").strip()
             threshold_val = float(threshold_raw)
         except Exception:
             threshold_val = 0.88
         self._semantic_best_effort_threshold = min(0.99, max(0.50, threshold_val))
-        eager_solf_init = str(os.getenv("IDMS_EAGER_SOLF_POLICY_INIT", "false")).strip().lower() in {
+        eager_solf_init = str(os.getenv("IKOS_EAGER_SOLF_POLICY_INIT", "false")).strip().lower() in {
             "1", "true", "yes", "on"
         }
         self.solf_interpreter = None
@@ -3939,7 +3939,9 @@ class IDMSInteractionTools:
             return None
 
         try:
-            solf_script = script_path.read_text(encoding="utf-8")
+            from solf_program import read_program
+
+            solf_script = read_program(script_path)
             interpreter = SOLFInterpreter()
             parser_adapter = type("Parser", (object,), {"parse": staticmethod(solf_parser.parse_script)})()
             interpreter.set_parser(parser_adapter)
@@ -4562,7 +4564,9 @@ class IDMSInteractionTools:
     def _registered_interaction_capabilities(self) -> dict[str, Any]:
         script_path = Path(__file__).resolve().parent / "solf_script.txt"
         try:
-            script_text = script_path.read_text(encoding="utf-8")
+            from solf_program import read_program
+
+            script_text = read_program(script_path)
         except Exception:
             script_text = ""
         actions = sorted(set(re.findall(r"(?m)^action_plan\(([a-zA-Z0-9_]+),", script_text)))
@@ -5060,11 +5064,11 @@ class IDMSInteractionTools:
 
     def _resolve_source_db_password(self, source_key: str) -> str:
         sanitized = re.sub(r"[^A-Za-z0-9]", "_", str(source_key or "").upper())
-        per_source_key = f"IDMS_SOURCE_DB_PASSWORD_{sanitized}" if sanitized else ""
+        per_source_key = f"IKOS_SOURCE_DB_PASSWORD_{sanitized}" if sanitized else ""
         return (
             (os.getenv(per_source_key, "") if per_source_key else "")
-            or os.getenv("IDMS_SOURCE_DB_PASSWORD", "")
-            or os.getenv("IDMS_DB_PASSWORD", "")
+            or os.getenv("IKOS_SOURCE_DB_PASSWORD", "")
+            or os.getenv("IKOS_DB_PASSWORD", "")
         )
 
     def _build_integrate_source_database_preview(self, payload: dict[str, Any]) -> dict[str, Any]:
@@ -5078,9 +5082,9 @@ class IDMSInteractionTools:
 
         source_key = str(payload.get("source_key") or db_name).strip().lower()
         source_name = str(payload.get("source_name") or db_name).strip() or db_name
-        db_host = str(payload.get("db_host") or os.getenv("IDMS_DB_HOST", "localhost")).strip() or "localhost"
-        db_port = int(payload.get("db_port") or os.getenv("IDMS_DB_PORT", "5432") or 5432)
-        db_user = str(payload.get("db_user") or os.getenv("IDMS_DB_USER", "postgres")).strip() or "postgres"
+        db_host = str(payload.get("db_host") or os.getenv("IKOS_DB_HOST", "localhost")).strip() or "localhost"
+        db_port = int(payload.get("db_port") or os.getenv("IKOS_DB_PORT", "5432") or 5432)
+        db_user = str(payload.get("db_user") or os.getenv("IKOS_DB_USER", "postgres")).strip() or "postgres"
         db_schema = str(payload.get("db_schema") or "").strip()
         include_views = bool(payload.get("include_views", False))
         schema_names = [str(item).strip() for item in list(payload.get("schema_names") or []) if str(item).strip()]
@@ -5127,7 +5131,7 @@ class IDMSInteractionTools:
             return {
                 "action": "integrate_source_database",
                 "success": False,
-                "message": "Source database password is missing. Provide db_password or configure IDMS_SOURCE_DB_PASSWORD(_<SOURCE_KEY>).",
+                "message": "Source database password is missing. Provide db_password or configure IKOS_SOURCE_DB_PASSWORD(_<SOURCE_KEY>).",
                 "plan": plan,
             }
 
@@ -5584,7 +5588,7 @@ class IDMSInteractionTools:
             return {
                 "action": "sync_source_database_entities",
                 "success": False,
-                "message": "Source database password is missing. Provide db_password or configure IDMS_SOURCE_DB_PASSWORD(_<SOURCE_KEY>).",
+                "message": "Source database password is missing. Provide db_password or configure IKOS_SOURCE_DB_PASSWORD(_<SOURCE_KEY>).",
                 "source": source,
                 "plan": plan,
             }
@@ -6620,7 +6624,9 @@ class IDMSInteractionTools:
             }
 
         try:
-            text = script_path.read_text(encoding="utf-8")
+            from solf_program import read_program
+
+            text = read_program(script_path)
         except Exception:
             return {
                 "classes": [],

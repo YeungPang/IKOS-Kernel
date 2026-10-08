@@ -145,8 +145,8 @@ from llm_fallback import (
 LOGGER = logging.getLogger("idms.ingest")
 
 # Timing instrumentation (dev/prod configurable)
-ENABLE_TIMING = str(os.getenv("IDMS_ENABLE_TIMING", "false")).strip().lower() in {"1", "true", "yes", "on"}
-ENABLE_RELATION_TABLE_ENRICHMENT = str(os.getenv("IDMS_ENABLE_RELATION_TABLE_ENRICHMENT", "false")).strip().lower() in {"1", "true", "yes", "on"}
+ENABLE_TIMING = str(os.getenv("IKOS_ENABLE_TIMING", "false")).strip().lower() in {"1", "true", "yes", "on"}
+ENABLE_RELATION_TABLE_ENRICHMENT = str(os.getenv("IKOS_ENABLE_RELATION_TABLE_ENRICHMENT", "false")).strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _ensure_google_credentials_env_path() -> str:
@@ -977,7 +977,7 @@ OFFICE_TEXT_EXTENSIONS = {".docx", ".xlsx", ".xlsm"}
 VIDEO_EXTENSIONS = {".mp4", ".mov", ".avi", ".mkv", ".webm", ".m4v"}
 AUDIO_EXTENSIONS = {".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg", ".wma"}
 SUPPORTED_URI_EXTENSIONS = TEXT_EXTENSIONS | IMAGE_EXTENSIONS | OFFICE_TEXT_EXTENSIONS | {".pdf", ".xls"}
-MAX_STRUCTURED_TABLE_ROWS = max(1, int(os.getenv("IDMS_STRUCTURED_TABLE_ROW_LIMIT", "100")))
+MAX_STRUCTURED_TABLE_ROWS = max(1, int(os.getenv("IKOS_STRUCTURED_TABLE_ROW_LIMIT", "100")))
 
 MIME_BY_EXTENSION = {
     ".pdf": "application/pdf",
@@ -1458,7 +1458,7 @@ def index_document_in_discovery_engine(
     if not PROJECT_ID:
         raise ValueError("PROJECT_ID is required for Discovery Engine indexing")
     if not DISCOVERY_DATA_STORE_ID:
-        raise ValueError("IDMS_DISCOVERY_DATA_STORE_ID is required when Discovery indexing is enabled")
+        raise ValueError("IKOS_DISCOVERY_DATA_STORE_ID is required when Discovery indexing is enabled")
 
     discovery_location = str(DISCOVERY_LOCATION or "").strip() or "global"
     api_endpoint = "discoveryengine.googleapis.com"
@@ -1477,7 +1477,7 @@ def index_document_in_discovery_engine(
     except NotFound as exc:
         raise RuntimeError(
             "Discovery datastore not found for backfill/indexing: "
-            f"{datastore_name}. Check PROJECT_ID, IDMS_DISCOVERY_LOCATION, and IDMS_DISCOVERY_DATA_STORE_ID."
+            f"{datastore_name}. Check PROJECT_ID, IKOS_DISCOVERY_LOCATION, and IKOS_DISCOVERY_DATA_STORE_ID."
         ) from exc
 
     document = discoveryengine.Document(
@@ -1739,7 +1739,7 @@ def embed_text_chunks(client: Any, chunks: list[str]) -> list[list[float]]:
     if not chunks:
         return []
 
-    batch_size = max(1, int(os.getenv("IDMS_INGEST_EMBEDDING_BATCH_SIZE", "32")))
+    batch_size = max(1, int(os.getenv("IKOS_INGEST_EMBEDDING_BATCH_SIZE", "32")))
     embeddings: list[list[float]] = []
     for start in range(0, len(chunks), batch_size):
         batch = [str(chunk or "") for chunk in chunks[start : start + batch_size] if str(chunk or "").strip()]
@@ -1843,7 +1843,7 @@ def _ensure_qdrant_collection(
 ) -> None:
     """Ensure Qdrant collection exists with both dense and sparse vector support."""
     recreate_on_mismatch = str(
-        os.getenv("IDMS_QDRANT_AUTO_RECREATE_ON_DIM_MISMATCH", "false")
+        os.getenv("IKOS_QDRANT_AUTO_RECREATE_ON_DIM_MISMATCH", "false")
     ).strip().lower() in {"1", "true", "yes", "on"}
 
     expected_size = int(expected_vector_size or QDRANT_VECTOR_SIZE)
@@ -1865,12 +1865,12 @@ def _ensure_qdrant_collection(
             message = (
                 f"Qdrant collection '{collection_name}' dense vector size mismatch: "
                 f"collection={current_size}, expected={expected_size}. "
-                "Set IDMS_QDRANT_EMBEDDING_DIMENSION/model consistently or rebuild the collection."
+                "Set IKOS_QDRANT_EMBEDDING_DIMENSION/model consistently or rebuild the collection."
             )
             if not recreate_on_mismatch:
                 raise RuntimeError(message)
 
-            LOGGER.warning("%s Auto-recreating collection because IDMS_QDRANT_AUTO_RECREATE_ON_DIM_MISMATCH=true", message)
+            LOGGER.warning("%s Auto-recreating collection because IKOS_QDRANT_AUTO_RECREATE_ON_DIM_MISMATCH=true", message)
             qdrant.delete_collection(collection_name)
             existing.discard(collection_name)
 
@@ -3724,8 +3724,8 @@ def should_use_discovery_for_source(source_path_or_uri: str, source_mime_type: s
 def select_indexing_backend(prefer_discovery_for_media: bool) -> tuple[bool, bool, bool, str]:
     if not ENABLE_QDRANT_INDEX and not ENABLE_DISCOVERY_INDEX:
         raise ValueError(
-            "Indexing is required but both IDMS_ENABLE_QDRANT_INDEX and "
-            "IDMS_ENABLE_DISCOVERY_INDEX are disabled"
+            "Indexing is required but both IKOS_ENABLE_QDRANT_INDEX and "
+            "IKOS_ENABLE_DISCOVERY_INDEX are disabled"
         )
 
     if prefer_discovery_for_media:
@@ -6345,15 +6345,20 @@ def build_solf_interpreter(solf_script: str) -> SOLFInterpreter:
     interpreter.set_debug(False)
     try:
         runtime_pre_scripts, runtime_post_scripts = business_rules.load_active_business_rule_solf_script_chunks(limit=300)
-        first_script = "\n\n".join(chunk for chunk in [*runtime_pre_scripts, str(solf_script or "").strip()] if chunk)
-        if first_script:
-            interpreter.load_program_script(first_script, clear_existing=True)
-
-        runtime_post_script = "\n\n".join(chunk for chunk in runtime_post_scripts if chunk)
-        if runtime_post_script:
-            interpreter.load_program_script(runtime_post_script, clear_existing=False)
     except Exception:
-        pass
+        runtime_pre_scripts, runtime_post_scripts = [], []
+    # Expand before prepending runtime rules: the fixed marker is first-line only.
+    from solf_program import expand_bundled_program
+
+    first_script = "\n\n".join(
+        chunk for chunk in [*runtime_pre_scripts, expand_bundled_program(str(solf_script or "").strip())] if chunk
+    )
+    if first_script:
+        interpreter.load_program_script(first_script, clear_existing=True)
+
+    runtime_post_script = "\n\n".join(chunk for chunk in runtime_post_scripts if chunk)
+    if runtime_post_script:
+        interpreter.load_program_script(runtime_post_script, clear_existing=False)
     return interpreter
 
 
@@ -7302,7 +7307,9 @@ def run_ingest(
         workflow_trace.append(entry)
         LOGGER.info("workflow_step step=%s status=%s details=%s", step, status, details)
 
-    solf_script = Path(__file__).with_name("solf_script.txt").read_text(encoding="utf-8")
+    from solf_program import read_program
+
+    solf_script = read_program()
     class_defs = parse_solf_classes(solf_script)
     interpreter = build_solf_interpreter(solf_script)
     _record_step("load_solf", class_count=len(class_defs))
@@ -7357,7 +7364,7 @@ def run_ingest(
 
     markdown_rule_override = str(metadata_context.get("ingestion_markdown_rule") or "").strip().lower() or None
     markdown_max_runs_raw = metadata_context.get("ingestion_markdown_max_runs")
-    markdown_default_max_runs = int(str(os.getenv("IDMS_MAX_MARKDOWN_GENERATION_RUNS_PER_INGEST", "2")).strip() or "2")
+    markdown_default_max_runs = int(str(os.getenv("IKOS_MAX_MARKDOWN_GENERATION_RUNS_PER_INGEST", "2")).strip() or "2")
     try:
         markdown_max_runs = int(markdown_max_runs_raw) if markdown_max_runs_raw is not None else markdown_default_max_runs
     except (TypeError, ValueError):
@@ -7980,9 +7987,9 @@ def run_ingest(
     )
 
     if reuse_markdown is None:
-        reuse_markdown = str(os.getenv("IDMS_REUSE_MARKDOWN", "true")).strip().lower() in {"1", "true", "yes", "on"}
+        reuse_markdown = str(os.getenv("IKOS_REUSE_MARKDOWN", "true")).strip().lower() in {"1", "true", "yes", "on"}
     if persist_markdown is None:
-        persist_markdown = str(os.getenv("IDMS_PERSIST_MARKDOWN", "true")).strip().lower() in {"1", "true", "yes", "on"}
+        persist_markdown = str(os.getenv("IKOS_PERSIST_MARKDOWN", "true")).strip().lower() in {"1", "true", "yes", "on"}
 
     markdown_cache_path = _markdown_cache_path(source_path_or_uri, gcs_uri, ingested)
     markdown_text = ""

@@ -65,7 +65,7 @@ class RepairDocumentsRequest(BaseModel):
         default=False,
         description=(
             "When true, allows repair modes to persist newly generated markdown artifacts. "
-            "Requires a valid maintenance admin_token when IDMS_MAINTENANCE_TOKEN is configured."
+            "Requires a valid maintenance admin_token when IKOS_MAINTENANCE_TOKEN is configured."
         ),
     )
     admin_token: str = Field(

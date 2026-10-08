@@ -81,7 +81,7 @@ class TxMatchPendingRetryRequest(BaseModel):
 
 
 def _require_maintenance_token(admin_token: str = "") -> None:
-    required_token = str(os.getenv("IDMS_MAINTENANCE_TOKEN", "")).strip()
+    required_token = str(os.getenv("IKOS_MAINTENANCE_TOKEN", "")).strip()
     if required_token and str(admin_token or "") != required_token:
         raise HTTPException(status_code=403, detail="Invalid maintenance token")
 

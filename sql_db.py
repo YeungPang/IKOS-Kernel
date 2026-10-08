@@ -1,26 +1,21 @@
 import logging
-import os
 from datetime import date
-from pathlib import Path
 from typing import Any
 
 import psycopg2
-from dotenv import load_dotenv
 from psycopg2.extras import Json
 
+from ikos_config import DB_NAME, DB_HOST, DB_USER, DB_PASSWORD, DB_PORT
 from security_context import get_security_context
-
-BASE_DIR = Path(__file__).resolve().parent
-load_dotenv(BASE_DIR / ".env")
 
 
 def get_connection() -> psycopg2.extensions.connection:
     connection = psycopg2.connect(
-        database=os.getenv("IDMS_DB_NAME", "idms_demo"),
-        host=os.getenv("IDMS_DB_HOST", "localhost"),
-        user=os.getenv("IDMS_DB_USER", "postgres"),
-        password=os.getenv("IDMS_DB_PASSWORD", "Postgresql"),
-        port=os.getenv("IDMS_DB_PORT", "5432"),
+        database=DB_NAME,
+        host=DB_HOST,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        port=DB_PORT,
     )
     context = get_security_context(required=False)
     tenant_id = context.tenant_id if context is not None else "00000000-0000-0000-0000-000000000001"
